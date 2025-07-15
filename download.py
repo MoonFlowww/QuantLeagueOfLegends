@@ -203,12 +203,14 @@ def main():
     puuid = get_puuid(SUMMONER_NAME, SUMMONER_TAG)
     logging.info(f"PUUID for {SUMMONER_NAME}#{SUMMONER_TAG}: {puuid}")
 
-    match_ids = get_match_ids(puuid, count=5)
-    print("Valid match IDs from API:", match_ids)
+    match_id = input("Enter match ID to analyze: ").strip()
 
-    match_id = input("Enter match ID to analyze: ")
+    # Automatically prepend region if not already in correct format
+    if not match_id.startswith("EUW1_"):
+        match_id = f"EUW1_{match_id}"
+
     if match_id not in match_ids:
-        print("Warning: Match ID not in recent history. Proceeding anyway...")
+        print("Warning: Match ID not found in recent history. Proceeding anyway...")
 
     match_data = get_match_details(match_id)
     table_name, participants, game_timestamp = process_match_data(match_data)
@@ -217,7 +219,7 @@ def main():
     create_game_table(conn, table_name)
     save_participant_data(conn, table_name, participants, game_timestamp)
 
-    print(f"✅ Saved data for match {match_id} in table '{table_name}'")
+    print(f"Saved data for match {match_id} in table '{table_name}'")
     conn.close()
 
 
