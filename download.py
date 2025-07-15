@@ -127,8 +127,9 @@ def save_participant_data(conn, table_name, participants, game_timestamp):
                 vision_score = EXCLUDED.vision_score,
                 items = EXCLUDED.items
             '''
-            items = [p.get(f'item{i}', 0) for i in range(7)]
-            items_str = [str(i) for i in items]
+            items_str = [str(p.get(f'item{i}', 0)) for i in range(7)]
+            items_pg = "{" + ",".join(items_str) + "}"  # Format as PostgreSQL array literal
+
             cur.execute(sql, (
                 p['participantId'], p['summonerName'], p['role'], p['championId'], p['mirrorChampion'],
                 p['teamKills'], p['enemyKills'], p['win'], p['kills'], p['deaths'], p['assists'],
