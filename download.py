@@ -127,19 +127,43 @@ def save_participant_data(conn, table_name, participants, game_timestamp):
                 vision_score = EXCLUDED.vision_score,
                 items = EXCLUDED.items
             '''
-            items_str = [str(p.get(f'item{i}', 0)) for i in range(7)]
-            items_pg = "{" + ",".join(items_str) + "}"  # Format as PostgreSQL array literal
+
+            # Properly convert list of items to PostgreSQL array literal
+            items = [str(p.get(f'item{i}', 0)) for i in range(7)]
+            pg_array = "{" + ",".join(items) + "}"  # e.g. {1055,2003,2003,0,0,0,0}
+
+            logging.debug(f"Inserting participant {p['participantId']} with items: {pg_array}")
 
             cur.execute(sql, (
-                p['participantId'], p['summonerName'], p['role'], p['championId'], p['mirrorChampion'],
-                p['teamKills'], p['enemyKills'], p['win'], p['kills'], p['deaths'], p['assists'],
-                game_timestamp, p.get('goldEarned', 0), p.get('goldPerSecond', 0),
-                p.get('totalGold', 0), p.get('currentGold', 0), p.get('xp', 0), p.get('level', 0),
-                p.get('jungleMinionsKilled', 0), p.get('minionsKilled', 0),
-                p.get('timeEnemySpentControlled', 0), p.get('totalDamageDealtToChampions', 0),
-                p.get('totalDamageTaken', 0), p.get('visionScore', 0), items_str
+                p['participantId'],
+                p['summonerName'],
+                p['role'],
+                p['championId'],
+                p['mirrorChampion'],
+                p['teamKills'],
+                p['enemyKills'],
+                p['win'],
+                p['kills'],
+                p['deaths'],
+                p['assists'],
+                game_timestamp,
+                p.get('goldEarned', 0),
+                p.get('goldPerSecond', 0),
+                p.get('totalGold', 0),
+                p.get('currentGold', 0),
+                p.get('xp', 0),
+                p.get('level', 0),
+                p.get('jungleMinionsKilled', 0),
+                p.get('minionsKilled', 0),
+                p.get('timeEnemySpentControlled', 0),
+                p.get('totalDamageDealtToChampions', 0),
+                p.get('totalDamageTaken', 0),
+                p.get('visionScore', 0),
+                pg_array  # fixed line!
             ))
+
         conn.commit()
+        logging.info(f"✔ Successfully saved {len(participants)} participants into '{table_name}'")
 
 
 def process_match_data(match_data):
