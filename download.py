@@ -4,7 +4,7 @@ import re
 import logging
 
 # Configuration
-RIOT_API_KEY = 'RGAPI-REPLACE-ME'
+RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
 SUMMONER_NAME = 'MoonFloww'
 SUMMONER_TAG = '1188'
 REGION = 'euw1'
