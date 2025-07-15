@@ -5,6 +5,7 @@ import re
 # Configuration
 RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
 SUMMONER_NAME = 'MoonFloww'
+SUMMONER_TAG = '1188'
 PG_CONFIG = {
     'host': 'localhost',
     'port': 5432,
@@ -16,8 +17,8 @@ REGION = 'euw1'
 ROUTING = 'europe'
 
 
-def get_puuid(summoner_name):
-    url = f'https://{REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}'
+def get_puuid(summoner_name, summoner_tag):
+    url = f'https://{REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}/{summoner_tag}'
     headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -209,7 +210,7 @@ def process_match_data(match_data):
 
 
 def main():
-    puuid = get_puuid(SUMMONER_NAME)
+    puuid = get_puuid(SUMMONER_NAME, SUMMONER_TAG)
 
     match_id = input("Enter match ID: ")
 
