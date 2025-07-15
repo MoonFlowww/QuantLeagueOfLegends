@@ -197,15 +197,16 @@ def process_match_data(match_data):
 def main():
     logging.info("Validating API key...")
     if not validate_api_key():
-        print("Invalid or expired API key.")
+        logging.error("Invalid or expired API key.")
         return
 
     puuid = get_puuid(SUMMONER_NAME, SUMMONER_TAG)
     logging.info(f"PUUID for {SUMMONER_NAME}#{SUMMONER_TAG}: {puuid}")
 
-    match_id = input("Enter match ID to analyze: ").strip()
+    match_ids = get_match_ids(puuid, count=10)
+    print("Recent match IDs:", match_ids)
 
-    # Automatically prepend region if not already in correct format
+    match_id = input("Enter match ID to analyze: ").strip()
     if not match_id.startswith("EUW1_"):
         match_id = f"EUW1_{match_id}"
 
@@ -219,9 +220,8 @@ def main():
     create_game_table(conn, table_name)
     save_participant_data(conn, table_name, participants, game_timestamp)
 
-    print(f"Saved data for match {match_id} in table '{table_name}'")
+    logging.info(f"Saved data for match {match_id} in table '{table_name}'")
     conn.close()
-
 
 if __name__ == '__main__':
     main()
