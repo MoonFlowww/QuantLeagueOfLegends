@@ -17,14 +17,14 @@ REGION = 'europe'
 
 def get_puuid(summoner_name):
     url = f'https://{REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}'
-    headers = {'X-Riot-Token': API_KEY}
+    headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()['puuid']
 
 def get_match_ids(puuid, count=10):
     url = f'https://{ROUTING}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count={count}'
-    headers = {'X-Riot-Token': API_KEY}
+    headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()
