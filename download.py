@@ -4,7 +4,7 @@ import re
 
 # Configuration
 RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
-summoner_name = 'MoonFloww'
+SUMMONER_NAME = 'MoonFloww'
 PG_CONFIG = {
     'host': 'localhost',
     'port': 5432,
