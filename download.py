@@ -12,7 +12,8 @@ PG_CONFIG = {
     'user': 'player',
     'password': 'xyz'
 }
-REGION = 'europe'
+REGION = 'euw1'
+ROUTING = 'europe'
 
 
 def get_puuid(summoner_name):
