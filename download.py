@@ -3,15 +3,15 @@ import psycopg2
 import re
 
 # Configuration
-RIOT_API_KEY = 'YOUR_RIOT_API_KEY'
+RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
 PG_CONFIG = {
     'host': 'localhost',
     'port': 5432,
-    'dbname': 'riot_db',
-    'user': 'postgres',
-    'password': 'your_password'
+    'dbname': 'leagueoflegends',
+    'user': 'player',
+    'password': 'xyz'
 }
-REGION = 'europe'  # For match-v5, region routing is different, use americas/europe/asia/etc.
+REGION = 'europe'
 
 def get_match_details(match_id):
     url = f'https://{REGION}.api.riotgames.com/lol/match/v5/matches/{match_id}'
