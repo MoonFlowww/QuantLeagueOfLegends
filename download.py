@@ -4,6 +4,7 @@ import re
 
 # Configuration
 RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
+summoner_name = 'MoonFloww'
 PG_CONFIG = {
     'host': 'localhost',
     'port': 5432,
@@ -12,6 +13,22 @@ PG_CONFIG = {
     'password': 'xyz'
 }
 REGION = 'europe'
+
+
+def get_puuid(summoner_name):
+    url = f'https://{REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}'
+    headers = {'X-Riot-Token': API_KEY}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()['puuid']
+
+def get_match_ids(puuid, count=10):
+    url = f'https://{ROUTING}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count={count}'
+    headers = {'X-Riot-Token': API_KEY}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
 
 def get_match_details(match_id):
     url = f'https://{REGION}.api.riotgames.com/lol/match/v5/matches/{match_id}'
@@ -191,10 +208,12 @@ def process_match_data(match_data):
 
 
 def main():
+    puuid = get_puuid(SUMMONER_NAME)
+
     match_id = input("Enter match ID: ")
 
     match_data = get_match_details(match_id)
-
+    print("Valid match IDs from API:", match_ids)
     table_name, participants = process_match_data(match_data)
 
     conn = psycopg2.connect(**PG_CONFIG)
