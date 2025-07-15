@@ -1,11 +1,15 @@
 import requests
 import psycopg2
 import re
+import logging
 
 # Configuration
-RIOT_API_KEY = 'RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f'
+RIOT_API_KEY = 'RGAPI-REPLACE-ME'
 SUMMONER_NAME = 'MoonFloww'
 SUMMONER_TAG = '1188'
+REGION = 'euw1'
+ROUTING = 'europe'
+
 PG_CONFIG = {
     'host': 'localhost',
     'port': 5432,
@@ -13,19 +17,26 @@ PG_CONFIG = {
     'user': 'player',
     'password': 'xyz'
 }
-REGION = 'euw1'
-ROUTING = 'europe'
+
+logging.basicConfig(level=logging.INFO)
 
 
-def get_puuid(summoner_name, summoner_tag):
-    url = f'https://{REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}/{summoner_tag}'
+def validate_api_key():
+    url = f"https://{REGION}.api.riotgames.com/lol/status/v4/platform-data"
+    r = requests.get(url, headers={'X-Riot-Token': RIOT_API_KEY})
+    return r.status_code == 200
+
+
+def get_puuid(game_name, tag_line):
+    url = f"https://{ROUTING}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
     headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()['puuid']
 
+
 def get_match_ids(puuid, count=10):
-    url = f'https://{ROUTING}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count={count}'
+    url = f"https://{ROUTING}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?count={count}"
     headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -33,11 +44,12 @@ def get_match_ids(puuid, count=10):
 
 
 def get_match_details(match_id):
-    url = f'https://{REGION}.api.riotgames.com/lol/match/v5/matches/{match_id}'
+    url = f"https://{ROUTING}.api.riotgames.com/lol/match/v5/matches/{match_id}"
     headers = {'X-Riot-Token': RIOT_API_KEY}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()
+
 
 def sanitize_table_name(name):
     return re.sub(r'[^a-zA-Z0-9_]', '_', name)
@@ -77,6 +89,7 @@ def create_game_table(conn, table_name):
         cur.execute(sql)
         conn.commit()
 
+
 def save_participant_data(conn, table_name, participants, game_timestamp):
     with conn.cursor() as cur:
         for p in participants:
@@ -115,60 +128,33 @@ def save_participant_data(conn, table_name, participants, game_timestamp):
                 items = EXCLUDED.items
             '''
             items = [p.get(f'item{i}', 0) for i in range(7)]
-            # Convert item IDs to strings for text[] in Postgres
             items_str = [str(i) for i in items]
-
             cur.execute(sql, (
-                p['participantId'],
-                p['summonerName'],
-                p['role'],
-                p['championId'],
-                p['mirrorChampion'],
-                p['teamKills'],
-                p['enemyKills'],
-                p['win'],
-                p['kills'],
-                p['deaths'],
-                p['assists'],
-                game_timestamp,
-                p.get('goldEarned', 0),
-                p.get('goldPerSecond', 0),
-                p.get('totalGold', 0),
-                p.get('currentGold', 0),
-                p.get('xp', 0),
-                p.get('level', 0),
-                p.get('jungleMinionsKilled', 0),
-                p.get('minionsKilled', 0),
-                p.get('timeEnemySpentControlled', 0),
-                p.get('totalDamageDealtToChampions', 0),
-                p.get('totalDamageTaken', 0),
-                p.get('visionScore', 0),
-                items_str
+                p['participantId'], p['summonerName'], p['role'], p['championId'], p['mirrorChampion'],
+                p['teamKills'], p['enemyKills'], p['win'], p['kills'], p['deaths'], p['assists'],
+                game_timestamp, p.get('goldEarned', 0), p.get('goldPerSecond', 0),
+                p.get('totalGold', 0), p.get('currentGold', 0), p.get('xp', 0), p.get('level', 0),
+                p.get('jungleMinionsKilled', 0), p.get('minionsKilled', 0),
+                p.get('timeEnemySpentControlled', 0), p.get('totalDamageDealtToChampions', 0),
+                p.get('totalDamageTaken', 0), p.get('visionScore', 0), items_str
             ))
         conn.commit()
+
 
 def process_match_data(match_data):
     participants = match_data['info']['participants']
     game_timestamp = match_data['info']['gameStartTimestamp']
-
+    
     team_0_champions = [p['championId'] for p in participants if p['teamId'] == 100]
     team_1_champions = [p['championId'] for p in participants if p['teamId'] == 200]
-
     team_0_kills = sum(p['kills'] for p in participants if p['teamId'] == 100)
     team_1_kills = sum(p['kills'] for p in participants if p['teamId'] == 200)
 
     processed_participants = []
-
     for p in participants:
-        mirror = False
-        if p['teamId'] == 100:
-            mirror = p['championId'] in team_1_champions
-            team_kills = team_0_kills
-            enemy_kills = team_1_kills
-        else:
-            mirror = p['championId'] in team_0_champions
-            team_kills = team_1_kills
-            enemy_kills = team_0_kills
+        mirror = p['championId'] in (team_1_champions if p['teamId'] == 100 else team_0_champions)
+        team_kills = team_0_kills if p['teamId'] == 100 else team_1_kills
+        enemy_kills = team_1_kills if p['teamId'] == 100 else team_0_kills
 
         role_str = p.get('teamPosition') or 'UnknownRole'
         champion_str = str(p['championId'])
@@ -208,24 +194,30 @@ def process_match_data(match_data):
     return table_name, processed_participants, game_timestamp
 
 
-
 def main():
-    puuid = get_puuid(SUMMONER_NAME, SUMMONER_TAG)
+    logging.info("Validating API key...")
+    if not validate_api_key():
+        print("Invalid or expired API key.")
+        return
 
-    match_id = input("Enter match ID: ")
+    puuid = get_puuid(SUMMONER_NAME, SUMMONER_TAG)
+    logging.info(f"PUUID for {SUMMONER_NAME}#{SUMMONER_TAG}: {puuid}")
+
+    match_ids = get_match_ids(puuid, count=5)
+    print("Valid match IDs from API:", match_ids)
+
+    match_id = input("Enter match ID to analyze: ")
+    if match_id not in match_ids:
+        print("Warning: Match ID not in recent history. Proceeding anyway...")
 
     match_data = get_match_details(match_id)
-    print("Valid match IDs from API:", match_ids)
-    table_name, participants = process_match_data(match_data)
+    table_name, participants, game_timestamp = process_match_data(match_data)
 
     conn = psycopg2.connect(**PG_CONFIG)
-
     create_game_table(conn, table_name)
+    save_participant_data(conn, table_name, participants, game_timestamp)
 
-    save_participant_data(conn, table_name, participants)
-
-    print(f"Saved data for match {match_id} in table '{table_name}'")
-
+    print(f"✅ Saved data for match {match_id} in table '{table_name}'")
     conn.close()
 
 
