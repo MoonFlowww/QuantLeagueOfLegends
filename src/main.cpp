@@ -70,10 +70,19 @@ int main() {
         matchIds.push_back(gid);
     }
 
+    if (matchIds.empty()) {
+        std::cerr << "No match IDs retrieved. Check your network connection or API key." << std::endl;
+        return 1;
+    }
+
     std::vector<MatchSummary> matches;
     for (const auto &id : matchIds) {
         std::cout << "Downloading match " << id << "\n";
         std::string json = riot::get_match(id, apiKey, routing);
+        if (json.empty()) {
+            std::cerr << "Failed to download match " << id << "\n";
+            continue;
+        }
         matches.push_back(parse_match_json(json, id));
     }
 
