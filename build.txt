@@ -1,0 +1,1 @@
+g++ -std=c++17 -I/usr/include/postgresql src/main.cpp src/riot_api.cpp src/db.cpp src/summary.cpp -o main -lpq
