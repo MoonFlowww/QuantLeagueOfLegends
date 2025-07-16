@@ -47,7 +47,7 @@ static MatchSummary parse_match_json(const std::string &json, const std::string 
 }
 
 int main() {
-    const std::string apiKey = "YOUR_RIOT_API_KEY"; // set your key
+    const std::string apiKey = "RGAPI-67f4436d-e015-46ba-9462-aea26aceee2f"; // set your key
     const std::string region = "euw1";
     const std::string routing = "europe";
     const std::string summoner = "MoonFloww";
