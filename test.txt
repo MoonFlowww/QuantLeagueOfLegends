@@ -1,1 +1,1 @@
-curl -v -H "X-Riot-Token: RGAPI-8bf31269-19a0-4f14-806d-638c06d4f1d6" "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/MoonFloww/1188)"
+sudo curl -v -H "X-Riot-Token: RGAPI-8bf31269-19a0-4f14-806d-638c06d4f1d6" "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/MoonFloww/1188)"
