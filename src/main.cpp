@@ -53,6 +53,11 @@ int main() {
     const std::string summoner = "MoonFloww";
     const std::string tag = "1188";
 
+    if (!riot::api_key_valid(apiKey)) {
+        std::cerr << "Invalid Riot API key." << std::endl;
+        return 1;
+    }
+
     std::cout << "Fetching PUUID...\n";
     std::string puuid = riot::get_puuid(summoner, tag, apiKey, routing);
     if (puuid.empty()) {
