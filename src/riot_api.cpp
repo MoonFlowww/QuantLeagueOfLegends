@@ -1,4 +1,5 @@
 #include "riot_api.h"
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -8,6 +9,16 @@
 #include <unistd.h>
 
 namespace riot {
+
+bool api_key_valid(const std::string &apiKey) {
+    if (apiKey.size() != 42) return false;
+    if (apiKey.rfind("RGAPI-", 0) != 0) return false;
+    for (size_t i = 6; i < apiKey.size(); ++i) {
+        char c = apiKey[i];
+        if (!std::isalnum(static_cast<unsigned char>(c)) && c != '-') return false;
+    }
+    return true;
+}
 
 static std::string exec(const std::string &cmd) {
     std::array<char, 4096> buffer;
@@ -39,6 +50,7 @@ std::string get_puuid(const std::string &gameName,
                       const std::string &tagLine,
                       const std::string &apiKey,
                       const std::string &routing) {
+    if (!api_key_valid(apiKey)) return "";
     std::string url = "https://" + routing + ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
                        gameName + "/" + tagLine;
     std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
@@ -50,6 +62,7 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
                                        int count,
                                        const std::string &apiKey,
                                        const std::string &routing) {
+    if (!api_key_valid(apiKey)) return {};
     std::string url = "https://" + routing + ".api.riotgames.com/lol/match/v5/matches/by-puuid/" +
                        puuid + "/ids?count=" + std::to_string(count);
     std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
@@ -67,6 +80,7 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
 std::string get_match(const std::string &matchId,
                       const std::string &apiKey,
                       const std::string &routing) {
+    if (!api_key_valid(apiKey)) return "";
     std::string url = "https://" + routing + ".api.riotgames.com/lol/match/v5/matches/" + matchId;
     std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
     return exec(cmd);
