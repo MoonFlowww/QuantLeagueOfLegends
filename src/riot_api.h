@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace riot {
+bool api_key_valid(const std::string &apiKey);
 std::string get_puuid(const std::string &gameName,
                       const std::string &tagLine,
                       const std::string &apiKey,
