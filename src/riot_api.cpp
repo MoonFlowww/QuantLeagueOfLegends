@@ -7,6 +7,7 @@
 #include <array>
 #include <string>
 #include <unistd.h>
+#include <iostream>
 
 namespace riot {
 
@@ -32,6 +33,23 @@ static std::string exec(const std::string &cmd) {
     return result;
 }
 
+// Fetch a URL using curl, capturing the HTTP status code along with the body.
+// On error, status will be set to 0 and an empty string is returned.
+static std::string fetch(const std::string &url,
+                         const std::string &apiKey,
+                         long &status) {
+    std::string cmd = "curl -s -w '%{http_code}' -H 'X-Riot-Token: " + apiKey +
+                      "' '" + url + "'";
+    std::string out = exec(cmd);
+    if (out.size() < 3) {
+        status = 0;
+        return "";
+    }
+    std::string codeStr = out.substr(out.size() - 3);
+    status = std::strtol(codeStr.c_str(), nullptr, 10);
+    return out.substr(0, out.size() - 3);
+}
+
 static std::string jq_extract(const std::string &json, const std::string &filter) {
     char tmpName[] = "/tmp/jsonXXXXXX";
     int fd = mkstemp(tmpName);
@@ -51,10 +69,19 @@ std::string get_puuid(const std::string &gameName,
                       const std::string &apiKey,
                       const std::string &routing) {
     if (!api_key_valid(apiKey)) return "";
-    std::string url = "https://" + routing + ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
-                       gameName + "/" + tagLine;
-    std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
-    std::string json = exec(cmd);
+
+    std::string url = "https://" + 
+      routing +
+      ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + 
+      gameName + "/" + tagLine;
+  
+  
+    long status = 0;
+    std::string json = fetch(url, apiKey, status);
+    if (status != 200) {
+        std::cerr << "get_puuid failed with HTTP status " << status << std::endl;
+        return "";
+    }
     return jq_extract(json, ".puuid");
 }
 
@@ -63,10 +90,19 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
                                        const std::string &apiKey,
                                        const std::string &routing) {
     if (!api_key_valid(apiKey)) return {};
-    std::string url = "https://" + routing + ".api.riotgames.com/lol/match/v5/matches/by-puuid/" +
-                       puuid + "/ids?count=" + std::to_string(count);
-    std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
-    std::string json = exec(cmd);
+
+    if (count <= 0) return {};
+    std::string url =
+        "https://" + routing +
+        ".api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuid +
+        "/ids?count=" + std::to_string(count);
+    long status = 0;
+    std::string json = fetch(url, apiKey, status);
+    if (status != 200) {
+        std::cerr << "get_match_ids failed with HTTP status " << status << std::endl;
+        return {};
+    }
+
     std::string ids = jq_extract(json, ".[]");
     std::vector<std::string> result;
     std::istringstream iss(ids);
@@ -81,9 +117,17 @@ std::string get_match(const std::string &matchId,
                       const std::string &apiKey,
                       const std::string &routing) {
     if (!api_key_valid(apiKey)) return "";
-    std::string url = "https://" + routing + ".api.riotgames.com/lol/match/v5/matches/" + matchId;
-    std::string cmd = "curl -s -H 'X-Riot-Token: " + apiKey + "' '" + url + "'";
-    return exec(cmd);
+
+    std::string url = "https://" + routing +
+                       ".api.riotgames.com/lol/match/v5/matches/" + matchId;
+    long status = 0;
+    std::string json = fetch(url, apiKey, status);
+    if (status != 200) {
+        std::cerr << "get_match failed with HTTP status " << status << std::endl;
+        return "";
+    }
+    return json;
+
 }
 
 } // namespace riot
