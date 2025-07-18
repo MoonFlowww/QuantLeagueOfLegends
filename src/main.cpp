@@ -47,7 +47,7 @@ static MatchSummary parse_match_json(const std::string &json, const std::string 
 }
 
 int main() {
-    const std::string apiKey = "RGAPI-8bf31269-19a0-4f14-806d-638c06d4f1d6"; // 24hrs
+    const std::string apiKey = "RGAPI-29185b28-9e85-43ab-b998-7ad68102aacd"; // 24hrs
     const std::string region = "euw1";
     const std::string routing = "europe";
     const std::string summoner = "MoonFloww";
