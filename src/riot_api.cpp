@@ -69,9 +69,13 @@ std::string get_puuid(const std::string &gameName,
                       const std::string &apiKey,
                       const std::string &routing) {
     if (!api_key_valid(apiKey)) return "";
-    std::string url = "https://" + routing +
-                       ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
-                       gameName + "/" + tagLine;
+
+    std::string url = "https://" + 
+      routing +
+      ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + 
+      gameName + "/" + tagLine;
+  
+  
     long status = 0;
     std::string json = fetch(url, apiKey, status);
     if (status != 200) {
@@ -86,6 +90,7 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
                                        const std::string &apiKey,
                                        const std::string &routing) {
     if (!api_key_valid(apiKey)) return {};
+
     if (count <= 0) return {};
     std::string url =
         "https://" + routing +
@@ -97,6 +102,7 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
         std::cerr << "get_match_ids failed with HTTP status " << status << std::endl;
         return {};
     }
+
     std::string ids = jq_extract(json, ".[]");
     std::vector<std::string> result;
     std::istringstream iss(ids);
@@ -111,6 +117,7 @@ std::string get_match(const std::string &matchId,
                       const std::string &apiKey,
                       const std::string &routing) {
     if (!api_key_valid(apiKey)) return "";
+
     std::string url = "https://" + routing +
                        ".api.riotgames.com/lol/match/v5/matches/" + matchId;
     long status = 0;
@@ -120,6 +127,7 @@ std::string get_match(const std::string &matchId,
         return "";
     }
     return json;
+
 }
 
 } // namespace riot
