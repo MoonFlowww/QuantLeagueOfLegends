@@ -11,6 +11,10 @@
 
 namespace riot {
 
+static bool g_verbose = false;
+
+void set_verbose(bool v) { g_verbose = v; }
+
 bool api_key_valid(const std::string &apiKey) {
     if (apiKey.size() != 42) return false;
     if (apiKey.rfind("RGAPI-", 0) != 0) return false;
@@ -40,6 +44,9 @@ static std::string fetch(const std::string &url,
                          long &status) {
     std::string cmd = "curl -s -w '%{http_code}' -H 'X-Riot-Token: " + apiKey +
                       "' '" + url + "'";
+    if (g_verbose) {
+        std::cerr << "Executing: " << cmd << std::endl;
+    }
     std::string out = exec(cmd);
     if (out.size() < 3) {
         status = 0;
@@ -47,6 +54,9 @@ static std::string fetch(const std::string &url,
     }
     std::string codeStr = out.substr(out.size() - 3);
     status = std::strtol(codeStr.c_str(), nullptr, 10);
+    if (g_verbose) {
+        std::cerr << "HTTP status: " << status << std::endl;
+    }
     return out.substr(0, out.size() - 3);
 }
 
@@ -64,16 +74,19 @@ static std::string jq_extract(const std::string &json, const std::string &filter
     return out;
 }
 
-std::string get_puuid(const std::string &gameName,
-                      const std::string &tagLine,
+std::string get_puuid(const std::string &summonerName,
                       const std::string &apiKey,
-                      const std::string &routing) {
+                      const std::string &region) {
     if (!api_key_valid(apiKey)) return "";
 
-    std::string url = "https://" + 
-      routing +
-      ".api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + 
-      gameName + "/" + tagLine;
+    std::string url = "https://" +
+      region +
+      ".api.riotgames.com/lol/summoner/v4/summoners/by-name/" +
+      summonerName;
+
+    if (g_verbose) {
+        std::cerr << "Requesting PUUID for " << summonerName << "\n";
+    }
   
   
     long status = 0;
@@ -96,6 +109,9 @@ std::vector<std::string> get_match_ids(const std::string &puuid,
         "https://" + routing +
         ".api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuid +
         "/ids?count=" + std::to_string(count);
+    if (g_verbose) {
+        std::cerr << "Requesting match IDs for PUUID " << puuid << " count " << count << "\n";
+    }
     long status = 0;
     std::string json = fetch(url, apiKey, status);
     if (status != 200) {
@@ -120,6 +136,9 @@ std::string get_match(const std::string &matchId,
 
     std::string url = "https://" + routing +
                        ".api.riotgames.com/lol/match/v5/matches/" + matchId;
+    if (g_verbose) {
+        std::cerr << "Downloading match " << matchId << "\n";
+    }
     long status = 0;
     std::string json = fetch(url, apiKey, status);
     if (status != 200) {
