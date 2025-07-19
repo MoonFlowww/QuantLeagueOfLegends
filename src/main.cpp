@@ -51,15 +51,15 @@ int main() {
     const std::string region = "euw1";
     const std::string routing = "europe";
     const std::string summoner = "MoonFloww";
-    const std::string tag = "1188";
 
     if (!riot::api_key_valid(apiKey)) {
         std::cerr << "Invalid Riot API key." << std::endl;
         return 1;
     }
 
+    riot::set_verbose(true);
     std::cout << "Fetching PUUID...\n";
-    std::string puuid = riot::get_puuid(summoner, tag, apiKey, routing);
+    std::string puuid = riot::get_puuid(summoner, apiKey, region);
     if (puuid.empty()) {
         std::cerr << "Failed to get PUUID\n";
         return 1;
